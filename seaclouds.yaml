@@ -73,17 +73,17 @@ services:
         sudo pip install virtualenv
         # setup application environment
         export VIRTUALENVS_DIR=$HOME/virtualenvs
-        export SLA_DASHBOARD=$PWD
         rm -Rf $VIRTUALENVS_DIR/sla-dashboard
         # install application
-        git clone https://github.com/SeaCloudsEU/sla-dashboard .
+        test -f README.md || git clone https://github.com/SeaCloudsEU/sla-dashboard .
         virtualenv $VIRTUALENVS_DIR/sla-dashboard
         . $VIRTUALENVS_DIR/sla-dashboard/bin/activate
         pip install -r requirements.txt
         ./manage.py syncdb --noinput
         # run application
         ./manage.py runserver $SOCKET &
-        echo $! > $PID_FILE
+        sleep 5        # manage.py spawns; we must wait a little
+        netstat -tpln | grep "$SOCKET" | awk -F' *|/' '{print $7}' > $PID_FILE
       env:
         SLA_MANAGER_URL: $brooklyn:formatString("http://%s:%s", component("sla-core").attributeWhenReady("host.address"), component("sla-core").attributeWhenReady("http.port"))
         DEBUG: False
